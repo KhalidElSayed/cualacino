@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Cualacino</string>
+    <string name="appwidget_text">EXAMPLE</string>
+    <string name="configure">Configure</string>
+    <string name="add_widget">Add widget</string>
+    <string name="accept">Accept</string>
+    <string name="cancel">Cancel</string>
+    <string name="name">File name</string>
+    <string name="date">Last modification</string>
+
+</resources>
