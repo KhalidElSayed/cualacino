@@ -27,6 +27,7 @@ import com.alorma.cualacino.model.provider.CualacinoContentProvider;
 import com.alorma.cualacino.ui.widget.FileWidget;
 import com.alorma.cualacino.utils.FileManagerUtils;
 import com.alorma.cualacino.utils.MimeUtils;
+import com.bugsense.trace.BugSenseHandler;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -43,13 +44,11 @@ public class FileWidgetConfigureActivity extends Activity implements View.OnClic
     private ImageView image;
     private AppFile file;
 
-    public FileWidgetConfigureActivity() {
-        super();
-    }
-
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
+
+        BugSenseHandler.initAndStartSession(FileWidgetConfigureActivity.this, "6262773b");
 
         // Set the result to CANCELED.  This will cause the widget host to cancel
         // out of the widget placement if the user presses the back button.
