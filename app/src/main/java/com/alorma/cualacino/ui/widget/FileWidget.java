@@ -1,5 +1,6 @@
 package com.alorma.cualacino.ui.widget;
 
+import android.annotation.TargetApi;
 import android.app.LoaderManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
@@ -9,8 +10,11 @@ import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.DocumentsContract;
 import android.text.TextUtils;
+import android.util.Log;
 import android.widget.RemoteViews;
 
 import com.alorma.cualacino.R;
@@ -73,7 +77,7 @@ public class FileWidget extends AppWidgetProvider {
 
             AppFile file = new AppFileCursor().readCursor(cursor);
 
-            if (!TextUtils.isEmpty(file.getFilePath())) {
+            if (file.getUri() != Uri.EMPTY) {
                 RemoteViews remoteViews = new RemoteViews(context.getPackageName(),
                         R.layout.file_widget);
 
@@ -83,11 +87,9 @@ public class FileWidget extends AppWidgetProvider {
 
                 if (file.getMime() != null) {
                     Integer draw = MimeUtils.getMimeResource(file.getMime());
-                    if (draw != null) {
-                        remoteViews.setImageViewResource(R.id.appwidget_image, draw);
-                    } else {
-                        remoteViews.setImageViewResource(R.id.appwidget_image, R.drawable.ic_launcher);
-                    }
+
+                    remoteViews.setImageViewResource(R.id.appwidget_image, draw);
+
                     remoteViews.setOnClickPendingIntent(R.id.appwidget_image, pendingIntent);
                 }
 
@@ -99,32 +101,30 @@ public class FileWidget extends AppWidgetProvider {
     }
 
 
+    @TargetApi(Build.VERSION_CODES.KITKAT)
     private static PendingIntent getPendingIntent(Context ctx, AppFile appFile) {
+        Uri fileUri = appFile.getUri();
+
+        Log.i("WIDGET-TAG", appFile.toString());
+
         String action = Intent.ACTION_VIEW;
-        File file = new File(appFile.getFilePath());
-        Uri fileUri = Uri.fromFile(file);
+        String category = "";
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && DocumentsContract.isDocumentUri(ctx, fileUri)) {
+            action = Intent.ACTION_OPEN_DOCUMENT;
+            category = Intent.CATEGORY_OPENABLE;
+        }
+
+        Log.i("WIDGET-TAG", action);
+        Log.i("WIDGET-TAG", category);
 
         Intent intent = new Intent(action);
+        if (!TextUtils.isEmpty(category)) {
+            intent.addCategory(category);
+        }
         intent.setDataAndType(fileUri, appFile.getMime());
 
-        return PendingIntent.getActivity(ctx, file.hashCode(), intent, 0);
-    }
-
-    public class WidgetLoaderCallbacks implements LoaderManager.LoaderCallbacks<Cursor> {
-        @Override
-        public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-            return null;
-        }
-
-        @Override
-        public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-
-        }
-
-        @Override
-        public void onLoaderReset(Loader<Cursor> loader) {
-
-        }
+        return PendingIntent.getActivity(ctx, appFile.getUri().hashCode(), intent, 0);
     }
 }
 

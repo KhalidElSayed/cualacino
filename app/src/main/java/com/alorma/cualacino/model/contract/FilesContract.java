@@ -15,7 +15,7 @@ public class FilesContract implements Contract {
     public static final String CONTENT_ITEM = ContentResolver.CURSOR_ITEM_BASE_TYPE + "/vnd.android." + PATH_DIR;
 
     public static class FilesColumns implements BaseColumns {
-        public static final String PATH = "PATH";
+        public static final String URI = "URI";
         public static final String WIDGET_ID = "WIDGET_ID";
         public static final String MIME = "MIME";
         public static final String NAME = "NAME";
@@ -28,7 +28,7 @@ public class FilesContract implements Contract {
         sb.append(TABLE);
         sb.append(" (");
         sb.append(FilesColumns._ID + " INTEGER PRIMARY KEY, ");
-        sb.append(FilesColumns.PATH + " TEXT, ");
+        sb.append(FilesColumns.URI + " TEXT, ");
         sb.append(FilesColumns.NAME + " TEXT, ");
         sb.append(FilesColumns.WIDGET_ID + " INTEGER, ");
         sb.append(FilesColumns.MIME + " TEXT");

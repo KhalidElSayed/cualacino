@@ -3,12 +3,15 @@ package com.alorma.cualacino.ui.activity;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.appwidget.AppWidgetManager;
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.OpenableColumns;
 import android.support.v4.widget.ContentLoadingProgressBar;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
@@ -86,53 +89,58 @@ public class FileWidgetConfigureActivity extends Activity implements View.OnClic
 
         if (resultCode == RESULT_OK && requestCode == REQUEST_GET_CONTENT) {
             Uri uri = data.getData();
-            String mime = data.getType();
+            String name = getNameFromUri(uri);
+            String mime = getMimeFromUri(uri);
 
-            Log.i("CUALACINO_URI", String.valueOf(uri));
+            file = new AppFile();
 
-            if (uri != null) {
-                if (FileManagerUtils.isFile(uri)) {
-                    file = getFileInfo(uri, uri.getPath(), mime);
-                } else {
-                    finishWidgetConf(RESULT_CANCELED);
+            file.setWidgetId(mAppWidgetId);
+            file.setFileName(name);
+            file.setMime(mime);
+            file.setUri(uri);
+
+            Log.i("TAG-FILE", file.toString());
+
+            updateUi(file);
+        }
+    }
+
+    private String getNameFromUri(Uri uri) {
+        if (uri != null && uri.getScheme() != null) {
+            if (uri.getScheme().equalsIgnoreCase(ContentResolver.SCHEME_CONTENT)) {
+                Cursor cursor =
+                        getContentResolver().query(uri, null, null, null, null);
+
+                if (cursor != null && cursor.moveToFirst()) {
+                    int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+
+                    if (nameIndex > 0) {
+                        return cursor.getString(nameIndex);
+                    }
                 }
-            }
-
-            if (file != null) {
-                updateUi(file);
-            } else {
-                finishWidgetConf(RESULT_CANCELED);
+            } else if (uri.getScheme().equalsIgnoreCase(ContentResolver.SCHEME_FILE)) {
+                File file = new File(uri.getPath());
+                return file.getName();
             }
         }
+
+        return "";
     }
 
-    private AppFile getFileInfo(Uri uri, String path, String mime) {
-        String extensionMime = MimeTypeMap.getSingleton().getExtensionFromMimeType(mime);
-        String extensionUrl = MimeTypeMap.getFileExtensionFromUrl(String.valueOf(uri));
-        String extension = TextUtils.isEmpty(extensionMime) ? extensionUrl : extensionMime;
-        mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
-        File file = new File(path);
-        String fileName = file.getName();
-        if (fileName != null && extension != null) {
-            fileName = fileName.replace(extension, "").replace(".", "");
+    private String getMimeFromUri(Uri uri) {
+        String mime = getContentResolver().getType(uri);
+
+        if (uri != null && uri.getScheme() != null &&
+                uri.getScheme().equalsIgnoreCase(ContentResolver.SCHEME_FILE)) {
+            String extensionUrl = MimeTypeMap.getFileExtensionFromUrl(String.valueOf(uri));
+            mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extensionUrl);
         }
-
-        return generateFile(path, fileName, mime);
-    }
-
-    private AppFile generateFile(String path, String fileName, String mime) {
-        AppFile file = new AppFile();
-        file.setFilePath(path);
-        file.setMime(mime);
-        file.setWidgetId(mAppWidgetId);
-        file.setFileName(fileName);
-        file.setFile(new File(path));
-        return file;
+        return mime;
     }
 
     @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1)
     private void updateUi(AppFile file) {
-        String fileName = txtName.getText().toString();
+        String fileName = file.getFileName();
 
         if (TextUtils.isEmpty(fileName)) {
             txtName.setText(file.getFileName());
@@ -150,30 +158,26 @@ public class FileWidgetConfigureActivity extends Activity implements View.OnClic
 
     private Uri insertFile(AppFile file) {
 
-        String fileNameTxt = txtName.getText().toString();
-
-        if (!TextUtils.isEmpty(fileNameTxt) && !fileNameTxt.equalsIgnoreCase(file.getFileName())) {
-            file.setFileName(fileNameTxt);
+        String fileNameTxt = file.getFileName();
+        if (!TextUtils.isEmpty(txtName.getText())) {
+            fileNameTxt = txtName.getText() != null ? txtName.getText().toString() : "";
         }
 
-        ContentValues cv = new AppFileCursor().setValues(file);
+        file.setFileName(fileNameTxt);
 
+        ContentValues cv = new AppFileCursor().setValues(file);
         Uri insertUri = CualacinoContentProvider.buildUri(FilesContract.PATH_DIR);
 
         return getContentResolver().insert(insertUri, cv);
     }
 
     private void finishWidgetConf(int result) {
-        if (result == RESULT_CANCELED) {
-            Toast.makeText(this, "File content not supported yet", Toast.LENGTH_SHORT).show();
-        }
         setResult(result);
         finish();
     }
 
     private void updateWidget(Uri insertUri) {
         FileWidget.updateWidget(this, insertUri);
-
     }
 
     @Override

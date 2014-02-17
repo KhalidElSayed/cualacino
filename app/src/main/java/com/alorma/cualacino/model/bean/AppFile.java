@@ -1,5 +1,7 @@
 package com.alorma.cualacino.model.bean;
 
+import android.net.Uri;
+
 import java.io.File;
 
 /**
@@ -7,19 +9,9 @@ import java.io.File;
  */
 public class AppFile {
     private int widgetId;
-    private String filePath;
     private String fileName;
     private String mime;
-
-    public File getFile() {
-        return file;
-    }
-
-    public void setFile(File file) {
-        this.file = file;
-    }
-
-    public File file;
+    private Uri uri;
 
     public int getWidgetId() {
         return widgetId;
@@ -27,14 +19,6 @@ public class AppFile {
 
     public void setWidgetId(int widgetId) {
         this.widgetId = widgetId;
-    }
-
-    public String getFilePath() {
-        return filePath;
-    }
-
-    public void setFilePath(String filePath) {
-        this.filePath = filePath;
     }
 
     public String getMime() {
@@ -51,5 +35,24 @@ public class AppFile {
 
     public void setFileName(String fileName) {
         this.fileName = fileName;
+    }
+
+    public Uri getUri() {
+        return uri != null ? uri : Uri.EMPTY;
+    }
+
+    public void setUri(Uri uri) {
+        this.uri = uri;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("AppFile{");
+        sb.append("widgetId=").append(widgetId);
+        sb.append(", fileName='").append(fileName).append('\'');
+        sb.append(", mime='").append(mime).append('\'');
+        sb.append(", uri=").append(uri);
+        sb.append('}');
+        return sb.toString();
     }
 }
